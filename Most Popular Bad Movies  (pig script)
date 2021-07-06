@@ -1,0 +1,22 @@
+/* Average Rating less than 2.0
+   Sort them by total number of ratings */
+   
+ 
+ratings = LOAD '/user/maria_dev/ml-100k/u.data'  AS (userID:int, movieID:int, rating:int, ratingTime:int);
+metadata = LOAD '/user/maria_dev/ml-100k/u.item' USING PigStorage('|') AS (movieID:int, movieTitle:chararray, releaseDate:chararray, videoRealese:chararray, imdblink:chararray);
+    
+nameLookup = FOREACH metadata GENERATE movieID, movieTitle;
+    
+group_ratings = GROUP ratings BY movieID;
+
+average_count_ratings = FOREACH group_ratings GENERATE group as movieID, AVG(ratings.rating) AS avgRating, COUNT(ratings.rating) AS countRating;
+filter_ratings = FILTER average_count_ratings BY avgRating < 2.0;
+
+
+join_datasets = JOIN nameLookup by movieID, filter_ratings by movieID;
+
+sort_movies = ORDER join_datasets BY countRating DESC;	
+
+
+DUMP sort_movies;
+
